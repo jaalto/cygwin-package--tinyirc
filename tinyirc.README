@@ -1,0 +1,72 @@
+tinyirc
+------------------------------------------
+
+A tiny IRC client with all the basic features.
+
+A very small, stripped down IRC client. It doesn't have most of the
+more advanced commands in the ircII family of IRC Clients, nor does it
+have any color, but it works, and it's tiny.
+
+Runtime requirements:
+  cygwin
+
+Build requirements:
+  cygwin
+
+Canonical homepage:
+  http://packages.debian.org/unstable/net/tinyirc
+  ftp://ftp.linpeople.org/pub/People/nathan/
+
+Canonical download:
+  See above
+
+Version control repository:
+
+Upstream contact:
+  Author: Nathan Laredo <laredo@gnu.ai.mit.edu>
+  Bugs: Nathan Laredo <laredo@gnu.ai.mit.edu>
+
+License:
+  GPL
+
+Language:
+  C
+
+------------------------------------
+
+Build instructions:
+  unpack tinyirc-1.1-1-src.tar.bz2
+    if you use setup to install this src package, it will be
+    unpacked under /usr/src automatically
+  cd /usr/src
+  ./tinyirc*.sh all
+
+This will create:
+  tinyirc-1.1-1.tar.bz2
+  tinyirc-1.1-1-src.tar.bz2
+
+-------------------------------------------
+
+Files included in the binary distro:
+
+usr/bin/tinyirc.exe
+usr/share/doc/Cygwin/tinyirc-1.1.README
+usr/share/doc/tinyirc-1.1/COPYING
+usr/share/doc/tinyirc-1.1/DCC.doc
+usr/share/man/man1/tinyirc.1.gz
+
+------------------
+
+Port Notes:
+
+----- version 1.1-1 -----
+- 2005-08-31 Initial release. Basedon Debian package.
+- Debian patch applied (tinyirc.c).
+- No makefile, copied from Debian.
+- Makefile: install section added. Change default server to freenode.
+- tinyirc.c: Use ncurses/term.h, added ! defined(__CYGWIN__).
+  Used termcap 'li' which is incorrect in rxvt. Added code to check
+  env var LINES and use it.
+- http://cygwin.com/ml/cygwin-apps/2005-09/msg00008.html (ITP)
+
+Cygwin port maintained by: Jari Aalto <jari dt aalto A T cante dt net>
