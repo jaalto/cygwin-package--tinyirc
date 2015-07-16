@@ -1,0 +1,85 @@
+---
+ tinyirc.c |   28 ++++++++++++++--------------
+ 1 file changed, 14 insertions(+), 14 deletions(-)
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -66,13 +66,13 @@ struct dlist {
+ #define raise_sig(x) kill(getpid(), x)
+ struct dlist *obj = NULL, *olist = NULL, *newobj;
+ unsigned short IRCPORT = DEFAULTPORT;
+-int my_tcp, sok = 1, my_tty, hline, dumb = 0, CO, LI, column;
++int my_tcp, sok = 1, my_tty, h_line, dumb = 0, CO, LI, column;
+ char *tmp, *linein, *CM, *CS, *CE, *SO, *SE, *DC, *ptr, *term, *fromhost,
+ *TOK[20], IRCNAME[32], IRCLOGIN[64], IRCGECOS[64], inputbuf[512], ib[IB_SIZE],
+  serverdata[512], ch, bp[1024], lineout[512], *hist[HISTLEN], termcap[1024];
+ int cursd = 0, curli = 0, curx = 0, noinput = 0, reconnect = 1;
+ fd_set readfs;
+-struct timeval timeout;
++struct timeval time_out;
+ struct tm *timenow;
+ static time_t idletimer, datenow, wasdate, tmptime;
+ struct passwd *userinfo;
+@@ -753,7 +753,7 @@ void ppart()
+ }
+ void histupdate()
+ {
+-    linein = hist[hline];
++    linein = hist[h_line];
+     curx = curli = strlen(linein);
+     ppart();
+ }
+@@ -820,13 +820,13 @@ void userinput()
+ 	    tputs_x(tgoto(CM, curx % CO, LI - 1));
+ 	    break;
+ 	case '\16':
+-	    if ((++hline) >= HISTLEN)
+-		hline = 0;
++	    if ((++h_line) >= HISTLEN)
++		h_line = 0;
+ 	    histupdate();
+ 	    break;
+ 	case '\20':
+-	    if ((--hline) < 0)
+-		hline = HISTLEN - 1;
++	    if ((--h_line) < 0)
++		h_line = HISTLEN - 1;
+ 	    histupdate();
+ 	    break;
+ 	case '\r':
+@@ -836,10 +836,10 @@ void userinput()
+ 	    tputs_x(tgoto(CM, 0, LI - 1));
+ 	    tputs_x(CE);
+ 	    parseinput();
+-	    if ((++hline) >= HISTLEN)
+-		hline = 0;
++	    if ((++h_line) >= HISTLEN)
++		h_line = 0;
+ 	    curx = curli = 0;
+-	    linein = hist[hline];
++	    linein = hist[h_line];
+ 	    break;
+ 	case '\27':
+ 	    if (obj == NULL)
+@@ -1104,17 +1104,17 @@ For details please see the file COPYING.
+     signal(SIGTTIN, stopin);
+     for (i = 0; i < HISTLEN; i++)
+ 	hist[i] = (char *) calloc(512, sizeof(char));
+-    linein = hist[hline = 0];
++    linein = hist[h_line = 0];
+     while (sok) {
+ 	FD_ZERO(&readfs);
+ 	FD_SET(my_tcp, &readfs);
+ 	if (!noinput)
+ 	    FD_SET(my_tty, &readfs);
+ 	if (!dumb) {
+-	    timeout.tv_sec = 61;
+-	    timeout.tv_usec = 0;
++	    time_out.tv_sec = 61;
++	    time_out.tv_usec = 0;
+ 	}
+-	if (select(FD_SETSIZE, &readfs, NULL, NULL, (dumb ? NULL : &timeout))) {
++	if (select(FD_SETSIZE, &readfs, NULL, NULL, (dumb ? NULL : &time_out))) {
+ 	    if (FD_ISSET(my_tty, &readfs))
+ 		userinput();
+ 	    if (FD_ISSET(my_tcp, &readfs))
