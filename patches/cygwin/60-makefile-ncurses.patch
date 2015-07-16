@@ -1,0 +1,40 @@
+---
+ Makefile |    9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -6,6 +6,7 @@
+ #
+ SERVER = irc.linpeople.org
+ PORT = 7000
++LIBTERM = ncursesw
+ #
+ all:
+ 	## Please use "make target"
+@@ -16,21 +17,21 @@ all:
+ 	## If you have trouble with the input line, try a different target
+ 
+ debug:
+-	$(MAKE) tinyirc CFLAGS=-g LDFLAGS=-g CC=gcc LIBS=-ltermcap
++	$(MAKE) tinyirc CFLAGS=-g LDFLAGS=-g CC=gcc LIBS=-l$(LIBTERM)
+ 
+ generic:
+-	$(MAKE) tinyirc CFLAGS=-O LDFLAGS=-s LIBS=-ltermcap
++	$(MAKE) tinyirc CFLAGS=-O LDFLAGS=-s LIBS=-l$(LIBTERM)
+ 
+ aix:
+ 	$(MAKE) tinyirccv CFLAGS="-O -D_AIX_" \
+ 		LDFLAGS=-s LIBS=-lcurses CC=bsdcc
+ 
+ posix:
+-	$(MAKE) tinyirc CFLAGS="-O2 -m486 -DPOSIX" LDFLAGS="-s" LIBS=-ltermcap
++	$(MAKE) tinyirc CFLAGS="-O2 -DPOSIX" LDFLAGS="-s" LIBS=-l$(LIBTERM)
+ 
+ gnu:
+ 	$(MAKE) tinyirc CFLAGS="-O2 -pipe -DPOSIX -Wall -Wunused -Wformat" \
+-		LDFLAGS=-s LIBS=-ltermcap CC=gcc
++		LDFLAGS=-s LIBS=-l$(LIBTERM) CC=gcc
+ 
+ hpux:
+ 	$(MAKE) tinyirccv LDFLAGS=-s LIBS=-lcurses
