@@ -1,0 +1,17 @@
+From: Decklin Foster <decklin@red-bean.com>
+Date: Tue, 19 Aug 2003 10:17:50 -0400
+Subject: add isatty(3) check in case of stdin
+
+Bug-Debian: http://bugs.debian.org/176213
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -967,7 +967,7 @@ For details please see the file COPYING.\n", RELEASE);
+ 	    strncpy(IRCNAME, tmp, sizeof(IRCNAME));
+ 	strcpy(IRCLOGIN, userinfo->pw_name);
+ 	setutent();
+-	strcpy(ut.ut_line, strrchr(ttyname(0), '/') + 1);
++	strcpy(ut.ut_line, isatty(0) ? strrchr(ttyname(0), '/') + 1 : "");
+ 	if ((utmp = getutline(&ut)) == NULL || !(utmp->ut_addr) ||
+ 	    *((char *) utmp->ut_host) == ':' /* X connection */ )
+ 	    tmp = userinfo->pw_gecos;

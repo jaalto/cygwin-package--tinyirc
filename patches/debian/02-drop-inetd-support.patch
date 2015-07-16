@@ -1,0 +1,31 @@
+From: Jay Kominek <jkominek@debian.org>
+Date: Sun, 28 Sep 1997 10:22:08 -0400
+Subject: drop inetd support
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -947,11 +947,11 @@ For details please see the file COPYING.\n", RELEASE);
+     if ((my_tty = open("/dev/tty", O_RDWR, 0)) == -1)
+ 	my_tty = fileno(stdin);
+     IRCGECOS[i = 63] = 0;
+-    if (!getpeername(my_tty, IRCGECOS, &i)) { /* inetd */
++/*  if (!getpeername(my_tty, IRCGECOS, &i)) { // inetd
+ 	strcpy(IRCNAME, IRCGECOS);
+ 	strcpy(IRCLOGIN, "fromident");
+ 	setenv("TERM", "vt102", 1);
+-    } else {
++    } else { */
+ 	userinfo = getpwuid(getuid());
+ 	tmp = (char *) getenv("IRCNICK");
+ 	if (tmp == NULL)
+@@ -975,8 +975,9 @@ For details please see the file COPYING.\n", RELEASE);
+ 		tmp = (char *) h->h_name;
+ 	}
+ 	strcpy(IRCGECOS, tmp);
++	if ((tmp = strchr(IRCGECOS, ','))) *tmp = '\0';
+ 	endutent();
+-    }
++/*  } */
+     fprintf(stderr, "*** User is %s\n", IRCGECOS);
+     printf("*** trying port %d of %s\n\n", IRCPORT, hostname);
+     if (makeconnect(hostname) < 0) {

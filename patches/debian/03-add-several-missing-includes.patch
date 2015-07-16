@@ -1,0 +1,21 @@
+From: Decklin Foster <decklin@red-bean.com>
+Date: Fri, 1 Jun 2001 16:54:21 -0400
+Subject: add several missing #includes
+
+Bug-Debian: http://bugs.debian.org/99030
+
+diff --git a/tinyirc.c b/tinyirc.c
+index 832cd71..4cfefea 100644
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -52,6 +52,10 @@
+ #include <netdb.h>
+ #include <signal.h>
+ #include <utmp.h>
++#include <stdlib.h>
++#include <time.h>
++#include <term.h>
++#include <arpa/inet.h>
+ struct dlist {
+     char name[64];
+     char mode[64];

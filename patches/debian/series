@@ -1,0 +1,9 @@
+01-nospoof-fix.patch
+02-drop-inetd-support.patch
+03-add-several-missing-includes.patch
+04-fix-definition-of-bp-for-tgetent-call.patch
+05-prevent-segfault-on-part.patch
+06-clean-up-several-warnings.patch
+07-add-isatty-3-check-in-case-of-stdin.patch
+08-avoid-NULL-dereferences.patch
+20-argc.patch

@@ -1,0 +1,117 @@
+From: Decklin Foster <decklin@red-bean.com>
+Date: Fri, 1 Jun 2001 16:54:21 -0400
+Subject: clean up several warnings
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -171,7 +171,7 @@ struct dlist *p;
+ }
+ 
+ char encoded[512];
+-hexascii(s)
++void hexascii(s)
+ char *s;
+ {
+     int ch, i, j, k, l;
+@@ -188,7 +188,7 @@ char *s;
+     }
+     encoded[j] = '\0';
+ }
+-asciihex(s)
++void asciihex(s)
+ char *s;
+ {
+     int i;
+@@ -237,7 +237,7 @@ static int doerror()
+ static int doinvite()
+ {
+     printf("*** %s (%s) invites you to join %s.",
+-	   TOK[0], fromhost, &TOK[3]);
++	   TOK[0], fromhost, TOK[3]);
+     return 0;
+ }
+ static int dojoin()
+@@ -486,7 +486,7 @@ char *p;
+ int count;
+ {
+     while (p != NULL) {
+-	if (tmp = strchr(p, ' '))
++	if ((tmp = strchr(p, ' ')))
+ 	    *(tmp++) = '\0';
+ 	if (strlen(p) < CO - count)
+ 	    count += printf(" %s", p);
+@@ -508,7 +508,7 @@ int parsedata()
+ 	if (*TOK[i] == ':')
+ 	    break;
+ 	else {
+-	    if (tmp = strchr(TOK[i], ' ')) {
++	    if ((tmp = strchr(TOK[i], ' '))) {
+ 		TOK[++i] = &tmp[1];
+ 		*tmp = '\0';
+ 	    } else
+@@ -517,7 +517,7 @@ int parsedata()
+     if (TOK[i] != NULL && *TOK[i] == ':')
+ 	TOK[i]++;
+     TOK[++i] = NULL;
+-    if (tmp = strchr(TOK[0], '!')) {
++    if ((tmp = strchr(TOK[0], '!'))) {
+ 	fromhost = &tmp[1];
+ 	*tmp = '\0';
+     } else
+@@ -529,7 +529,7 @@ int parsedata()
+ 	sprintf(lineout, "PONG :%s\n", TOK[1]);
+ 	return sendline();
+     }
+-    if (i = atoi(TOK[1]))
++    if ((i = atoi(TOK[1])))
+ 	i = donumeric(i);
+     else {
+ 	for (i = 0; i < LISTSIZE && !found; i++)
+@@ -586,7 +586,7 @@ void parseinput()
+     strcpy(inputbuf, linein);
+     TOK[i = 0] = inputbuf;
+     while (TOK[i] != NULL && i < 5)
+-	if (tmp = strchr(TOK[i], ' ')) {
++	if ((tmp = strchr(TOK[i], ' '))) {
+ 	    TOK[++i] = &tmp[1];
+ 	    *tmp = '\0';
+ 	} else
+@@ -612,7 +612,7 @@ void parseinput()
+ 	    return;
+ 	}
+ #ifndef AUTOJOIN
+-	if (i == DO_JOIN)
++	if (i == DO_JOIN) {
+ 	    if ((newobj = finditem(TOK[1], olist)) != NULL) {
+ 		wasdate = 0;
+ 		obj = newobj;
+@@ -624,6 +624,7 @@ void parseinput()
+ 		wasdate = 0;
+ 		return;
+ 	    }
++	}
+ 	if (i == DO_PART && !ischan(TOK[1]))
+ 	    if ((newobj = finditem(TOK[1], olist)) != NULL) {
+ 		wasdate = 0;
+@@ -890,7 +891,7 @@ char *hostname;
+ 	sa.sin_family = hp->h_addrtype;
+ 	sa.sin_port = htons((unsigned short) IRCPORT);
+ 	s = socket(hp->h_addrtype, SOCK_STREAM, 0);
+-	if (s > 0)
++	if (s > 0) {
+ 	    if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
+ 		close(s);
+ 		s = -1;
+@@ -910,10 +911,11 @@ char *hostname;
+ 		    sendline();
+ 		}		/* error checking will be done later */
+ 	    }
++	}
+     }
+     return s;
+ }
+-main(argc, argv)
++int main(argc, argv)
+ int argc;
+ char **argv;
+ {

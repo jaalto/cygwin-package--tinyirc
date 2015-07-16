@@ -1,0 +1,146 @@
+From: Jari Aalto <jari.aalto@cante.net>
+Subject: Correct argument handling. Support any port number (Closes: #625862).
+
+---
+ tinyirc.c |   91 ++++++++++++++++++++++++++++++++++++++++----------------------
+ 1 file changed, 60 insertions(+), 31 deletions(-)
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -61,7 +61,6 @@
+     char mode[64];
+     struct dlist *next;
+ };
+-
+ #define ischan(x) (x && (*x == '#' || *x == '&' || *x == '+'))
+ #define OBJ obj->name
+ #define raise_sig(x) kill(getpid(), x)
+@@ -458,7 +457,7 @@
+ 	return 0;
+     case 432:
+     case 433:
+-	printf("*** You've chosen an invalid nick.  Choose again.");
++	printf("*** You've chosen an invalid or reserved nick. Choose again.");
+ 	tmp = IRCNAME;
+ 	if (!dumb) {
+ 	    tputs_x(tgoto(CM, 0, LI - 1));
+@@ -954,6 +953,8 @@
+     }
+     return s;
+ }
++
++const char *ircgecos = "unknown";
+ int main(argc, argv)
+ int argc;
+ char **argv;
+@@ -961,35 +962,58 @@
+     struct utmp ut, *utmp;
+     char hostname[64];
+     int i = 0;
++
++    strncpy(hostname, DEFAULTSERVER, sizeof(hostname));
++
+     printf("%s Copyright (C) 1991-1996 Nathan Laredo\n\
+ This is free software with ABSOLUTELY NO WARRANTY.\n\
+ For details please see the file COPYING.\n", RELEASE);
+-    if (!(tmp = (char *) getenv("IRCSERVER")))
+-	strcpy(hostname, DEFAULTSERVER);
+-    else {
+-	while (*tmp && *tmp != ':')
+-	    hostname[i++] = *(tmp++);
+-	hostname[i] = '\0';
+-	if (*tmp == ':')
+-	    IRCPORT = (unsigned short) atoi(++tmp);
+-    }
+-    if (argc > 1) {
+-	for (i = 1; i < argc; i++)
+-	    if (argv[i][0] == '-') {
+-		if (argv[i][1] == 'd')
+-		    dumb = 1;
+-		else {
+-		    fprintf(stderr, "usage: %s %s\n", argv[0],
+-			    "[nick] [server] [port] [-dumb]");
+-		    exit(1);
+-		}
+-	    } else if (strchr(argv[i], '.'))
+-		strcpy(hostname, argv[i]);
+-	    else if (atoi(argv[i]) > 255)
+-		IRCPORT = atoi(argv[i]);
+-	    else
+-		strncpy(IRCNAME, argv[i], sizeof(IRCNAME));
++
++    if ( (tmp = (char *) getenv("IRCSERVER")) && tmp[0] != '\0' )
++	strncpy(hostname, tmp, sizeof(hostname));
++
++    int argok = 0;
++    int offset = 1;
++    int ircname = 0;
++
++    if (argc > offset) {
++	if ( (argv[offset][0] == '-') && (argv[offset][1] == 'd') ) {
++	    dumb = 1;
++	    offset++;
++	}
++    }
++
++    if (argc > offset) {
++	strncpy(IRCNAME, argv[offset], sizeof(IRCNAME));
++	IRCNAME[ sizeof(IRCNAME) - 1 ] = '\0';
++	offset++;
++	argok++;
++	ircname = 1;
+     }
++
++    if (argc > offset) {
++	strncpy(hostname, argv[offset], sizeof(hostname));
++	hostname[ sizeof(hostname) - 1 ] = '\0';
++	offset++;
++	argok++;
++    }
++
++    if (argc > offset) {
++	const char ch = argv[offset][0];
++
++	if ( (ch >= '0') && (ch <= '9' ) ) {
++	    IRCPORT = atoi(argv[offset]);
++	    offset++;
++	    argok++;
++	}
++    }
++
++    if ( ! argok )  {
++	fprintf(stderr, "usage: %s %s\n", argv[0],
++		"[-dumb] nick [server [port]]");
++	exit(1);
++    }
++
+     if ((my_tty = open("/dev/tty", O_RDWR, 0)) == -1)
+ 	my_tty = fileno(stdin);
+     IRCGECOS[i = 63] = 0;
+@@ -1000,10 +1024,12 @@
+     } else { */
+ 	userinfo = getpwuid(getuid());
+ 	tmp = (char *) getenv("IRCNICK");
+-	if (tmp == NULL)
+-	    strncpy(IRCNAME, userinfo->pw_name, sizeof(IRCNAME));
+-	else
+-	    strncpy(IRCNAME, tmp, sizeof(IRCNAME));
++	if (!ircname) {
++	    if (tmp == NULL)
++		strncpy(IRCNAME, userinfo->pw_name, sizeof(IRCNAME));
++	    else
++		strncpy(IRCNAME, tmp, sizeof(IRCNAME));
++	}
+ 	strcpy(IRCLOGIN, userinfo->pw_name);
+ 	setutent();
+ 	strcpy(ut.ut_line, isatty(0) ? strrchr(ttyname(0), '/') + 1 : "");
+@@ -1024,6 +1050,9 @@
+ 	if ((tmp = strchr(IRCGECOS, ','))) *tmp = '\0';
+ 	endutent();
+ /*  } */
++    if ( strlen(IRCGECOS) == 0 )
++	strcpy(IRCGECOS, ircgecos);  /* Use default value */
++
+     fprintf(stderr, "*** User is %s\n", IRCGECOS);
+     printf("*** trying port %d of %s\n\n", IRCPORT, hostname);
+     if (makeconnect(hostname) < 0) {

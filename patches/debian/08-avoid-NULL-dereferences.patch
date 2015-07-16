@@ -1,0 +1,258 @@
+From: "Bernhard R. Link" <brlink@debian.org>
+Date: Mon, 2 Jul 2012 16:46:13 +0200
+Subject: make sure to not reference NULL if getting less arguments than expected
+
+Bug-Debian: http://bugs.debian.org/452029
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -225,23 +225,32 @@ void updatestatus()
+ 	}
+     }
+ }
+-static int nop()
++static int malformeddata(void)
++{
++    column = printf("Incomplete/malformed data received.");
++    return 0;
++}
++static int nop(int count)
+ {
+     return 1;
+ }
+-static int doerror()
++static int doerror(int count)
+ {
+     column = printf("*** ERROR:");
+     return 2;
+ }
+-static int doinvite()
++static int doinvite(int count)
+ {
++    if (count <= 3)
++       return malformeddata();
+     printf("*** %s (%s) invites you to join %s.",
+ 	   TOK[0], fromhost, TOK[3]);
+     return 0;
+ }
+-static int dojoin()
++static int dojoin(int count)
+ {
++    if (count <= 2)
++       return malformeddata();
+     if (strcmp(TOK[0], IRCNAME) == 0) {
+ 	obj = olist = additem(TOK[2], olist);
+ 	sprintf(lineout, "MODE :%s\n", OBJ);
+@@ -252,8 +261,10 @@ static int dojoin()
+ 	printf("*** %s (%s) joined %s", TOK[0], fromhost, TOK[2]);
+     return 0;
+ }
+-static int dokick()
++static int dokick(int count)
+ {
++    if (count <= 4)
++       return malformeddata();
+     printf("*** %s was kicked from %s by %s (%s)",
+ 	   TOK[3], TOK[2], TOK[0], TOK[4]);
+     if (strcmp(TOK[3], IRCNAME) == 0) {
+@@ -266,15 +277,19 @@ static int dokick()
+     }
+     return 0;
+ }
+-static int dokill()
++static int dokill(int count)
+ {
++    if (count <= 3)
++       return malformeddata();
+     printf("*** %s killed by %s: ", TOK[3], TOK[0]);
+     if (strcmp(TOK[3], IRCNAME) == 0)
+ 	reconnect = 0;		/* don't reconnect if killed */
+     return 4;
+ }
+-static int domode()
++static int domode(int count)
+ {
++    if (count <= 3)
++       return malformeddata();
+     char *t = TOK[3], op = *TOK[3];
+     printf("*** %s changed %s to:", TOK[0], TOK[2]);
+     if ((newobj = finditem(TOK[2], olist)) != NULL) {
+@@ -293,8 +308,10 @@ static int domode()
+     }
+     return 3;
+ }
+-static int donick()
++static int donick(int count)
+ {
++    if (count <= 2)
++       return malformeddata();
+     if (strcmp(TOK[0], IRCNAME) == 0) {
+ 	wasdate = 0;
+ 	strcpy(IRCNAME, TOK[2]);
+@@ -302,16 +319,20 @@ static int donick()
+     printf("*** %s is now known as %s", TOK[0], TOK[2]);
+     return 0;
+ }
+-static int donotice()
++static int donotice(int count)
+ {
++    if (count <= 2)
++       return malformeddata();
+     if (!ischan(TOK[2]))
+ 	column = printf("-%s-", TOK[0]);
+     else
+ 	column = printf("-%s:%s-", TOK[0], TOK[2]);
+     return 3;
+ }
+-static int dopart()
++static int dopart(int count)
+ {
++    if (count <= 2)
++       return malformeddata();
+     printf("*** %s (%s) left %s", TOK[0], fromhost,
+ 	   TOK[2]);
+     if (strcmp(TOK[0], IRCNAME) == 0) {
+@@ -324,13 +345,15 @@ static int dopart()
+     }
+     return 0;
+ }
+-static int dopong()
++static int dopong(int count)
+ {
+     column = printf("*** Got PONG from %s:", TOK[0]);
+     return 3;
+ }
+-static int doprivmsg()
++static int doprivmsg(int count)
+ {
++    if (count <= 3)
++       return malformeddata();
+ #ifdef DO_CTCP
+     if (strncmp(TOK[3], "\01PING", 5) == 0) {	/* lame ctcp ping hack */
+ 	sprintf(lineout, "NOTICE %s :%s\n", TOK[0], TOK[3]);
+@@ -356,43 +379,54 @@ static int doprivmsg()
+ 	column = printf("<%s>", TOK[0]);
+     return 3;
+ }
+-static int doquit()
++static int doquit(int count)
+ {
++    if (count <= 2)
++       return malformeddata();
+     printf("*** %s (%s) Quit (%s)", TOK[0], fromhost, TOK[2]);
+     return 0;
+ }
+-static int dosquit()
++static int dosquit(int count)
+ {
+     return 1;
+ }
+-static int dotime()
++static int dotime(int count)
+ {
+     return 1;
+ }
+-static int dotopic()
++static int dotopic(int count)
+ {
++    if (count <= 3)
++       return malformeddata();
+     printf("*** %s set %s topic to \"%s\"", TOK[0], TOK[2],
+ 	   TOK[3]);
+     return 0;
+ }
+-int donumeric(num)
+-int num;
++int donumeric(int num, int count)
+ {
+     switch (num) {
+     case 352:
++        if (count <= 9)
++            return malformeddata();
+ 	column = printf("%-14s %-10s %-3s %s@%s :", TOK[3], TOK[7],
+ 			TOK[8], TOK[4], TOK[5]);
+ 	return 9;
+     case 311:
++        if (count <= 6)
++            return malformeddata();
+ 	column = printf("*** %s is %s@%s", TOK[3], TOK[4], TOK[5]);
+ 	return 6;
+     case 324:
++        if (count <= 4)
++            return malformeddata();
+ 	if ((newobj = finditem(TOK[3], olist)) != NULL) {
+ 	    strcpy(newobj->mode, TOK[4]);
+ 	    wasdate = 0;
+ 	}
+ 	break;
+     case 329:
++        if (count <= 4)
++            return malformeddata();
+ 	tmptime = atoi(TOK[4]);
+ 	strcpy(lineout, ctime(&tmptime));
+ 	tmp = strchr(lineout, '\n');
+@@ -401,6 +435,8 @@ int num;
+ 	column = printf("*** %s formed %s", TOK[3], lineout);
+ 	return 0;
+     case 333:
++        if (count <= 5)
++            return malformeddata();
+ 	tmptime = atoi(TOK[5]);
+ 	strcpy(lineout, ctime(&tmptime));
+ 	tmp = strchr(lineout, '\n');
+@@ -410,6 +446,8 @@ int num;
+ 			lineout);
+ 	return 0;
+     case 317:
++        if (count <= 5)
++            return malformeddata();
+ 	tmptime = atoi(TOK[5]);
+ 	strcpy(lineout, ctime(&tmptime));
+ 	tmp = strchr(lineout, '\n');
+@@ -498,7 +536,7 @@ int count;
+ }
+ int parsedata()
+ {
+-    int i, found = 0;
++    int count, i, found = 0;
+ 
+     if (!dumb)
+ 	tputs_x(tgoto(CM, 0, LI - 3));
+@@ -517,6 +555,7 @@ int parsedata()
+     if (TOK[i] != NULL && *TOK[i] == ':')
+ 	TOK[i]++;
+     TOK[++i] = NULL;
++    count = i;
+     if ((tmp = strchr(TOK[0], '!'))) {
+ 	fromhost = &tmp[1];
+ 	*tmp = '\0';
+@@ -530,16 +569,16 @@ int parsedata()
+ 	return sendline();
+     }
+     if ((i = atoi(TOK[1])))
+-	i = donumeric(i);
++	i = donumeric(i, count);
+     else {
+ 	for (i = 0; i < LISTSIZE && !found; i++)
+ 	    found = (strcmp(clist[i], TOK[1]) == 0);
+ 	if (found)
+-	    i = (*docommand[i - 1]) ();
++	    i = (*docommand[i - 1]) (count);
+ 	else
+-	    i = nop();
++	    i = nop(count);
+     }
+-    if (i) {
++    if (i && i < count) {
+ 	if (*TOK[i] == ASCIIHEXCHAR && TOK[i + 1] == NULL) {
+ 	    hexascii(&TOK[i][1]);
+ #ifdef USE_ANSICOLOR
+@@ -559,7 +598,7 @@ int parsedata()
+     }
+     if (dumb)
+ 	putchar('\n');
+-    if (strncmp(TOK[1], "Closing", 7) == 0)
++    if (TOK[1] != NULL && strncmp(TOK[1], "Closing", 7) == 0)
+ 	return (reconnect = 0);
+     return 1;
+ }

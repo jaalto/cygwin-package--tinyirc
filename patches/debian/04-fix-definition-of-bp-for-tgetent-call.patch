@@ -1,0 +1,15 @@
+From: Decklin Foster <decklin@red-bean.com>
+Date: Fri, 1 Jun 2001 16:54:21 -0400
+Subject: fix definition of bp for tgetent call
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -70,7 +70,7 @@ unsigned short IRCPORT = DEFAULTPORT;
+ int my_tcp, sok = 1, my_tty, hline, dumb = 0, CO, LI, column;
+ char *tmp, *linein, *CM, *CS, *CE, *SO, *SE, *DC, *ptr, *term, *fromhost,
+ *TOK[20], IRCNAME[32], IRCLOGIN[64], IRCGECOS[64], inputbuf[512], ib[IB_SIZE],
+- serverdata[512], ch, *bp[1024], lineout[512], *hist[HISTLEN], termcap[1024];
++ serverdata[512], ch, bp[1024], lineout[512], *hist[HISTLEN], termcap[1024];
+ int cursd = 0, curli = 0, curx = 0, noinput = 0, reconnect = 1;
+ fd_set readfs;
+ struct timeval timeout;

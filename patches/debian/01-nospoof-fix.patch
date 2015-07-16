@@ -1,0 +1,28 @@
+From: Jay Kominek <jkominek@debian.org>
+Date: Sun, 8 Mar 1998 22:21:53 -0500
+Subject: Corrected a bug which prevented TinyIRC from function with servers that used the nospoof patch.
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -495,10 +495,6 @@ int parsedata()
+ {
+     int i, found = 0;
+ 
+-    if (serverdata[0] == 'P') {
+-	sprintf(lineout, "PONG :%s\n", IRCNAME);
+-	return sendline();
+-    }
+     if (!dumb)
+ 	tputs_x(tgoto(CM, 0, LI - 3));
+     TOK[i = 0] = serverdata;
+@@ -524,6 +520,10 @@ int parsedata()
+     if (!dumb)
+ 	putchar('\n');
+     column = 0;
++    if (serverdata[0] == 'P') {
++	sprintf(lineout, "PONG :%s\n", TOK[1]);
++	return sendline();
++    }
+     if (i = atoi(TOK[1]))
+ 	i = donumeric(i);
+     else {

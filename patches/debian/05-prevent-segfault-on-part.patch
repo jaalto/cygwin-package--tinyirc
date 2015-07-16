@@ -1,0 +1,25 @@
+From: Decklin Foster <decklin@red-bean.com>
+Date: Fri, 12 Jan 2001 15:59:33 -0500
+Subject: prevent segfault on /part
+
+Bug-Debian: http://bugs.debian.org/70671
+
+--- a/tinyirc.c
++++ b/tinyirc.c
+@@ -62,7 +62,7 @@ struct dlist {
+     struct dlist *next;
+ };
+ 
+-#define ischan(x) (*x == '#' || *x == '&' || *x == '+')
++#define ischan(x) (x && (*x == '#' || *x == '&' || *x == '+'))
+ #define OBJ obj->name
+ #define raise_sig(x) kill(getpid(), x)
+ struct dlist *obj = NULL, *olist = NULL, *newobj;
+@@ -110,6 +110,7 @@ int my_stricmp(str1, str2)
+ char *str1, *str2;
+ {
+     int cmp;
++    if (str1 == NULL || str2 == NULL) return 0;
+     while (*str1 != 0 && str2 != 0) {
+ 	if (isalpha(*str1) && isalpha(*str2)) {
+ 	    cmp = *str1 ^ *str2;
