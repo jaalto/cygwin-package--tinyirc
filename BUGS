@@ -1,0 +1,6 @@
+Cygwin x86
+
+- Compiles ok with patches/cygwin
+- when run, the irc server reponds "connecting too fast, throttling"
+- The NICK provided from command line is not use. Instead the
+  GROUP\name windows login is used. This may be the problem above.
